@@ -22,53 +22,64 @@
 #define rw 10.27//右边颜料盘位置
 #define PI 3.141593
 
-int cx,cy;
-int flag;
-double mx,my;
-int TYPE; 
-void KeyboardEventProcess(int key,int event);
-void MouseEventProcess(int x,int y,int button,int event);
-void DrawBox_init(double x,double y,char str1[],char str2[]);
-void DrawBox_init1(double x,double y,char str1[],char str2[]);
-
-void DrawRec(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4);
-void DrawRoundedRec(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4);
-void DrawCircle(x, y, radius);
-void DrawEllipse()
-double CalcAngle(double x0, double y0, double x1, double y1, double x2, double y2);
-double CalcDistance(double x1, double y1, double x2, double y2);
-void DrawGraphic(struct shape* p); 
-
-
-
 
 typedef struct shape{
 	int x1,y1;//top left
 	int x2,y2;//top right
 	int x3,y3;// bottom left
 	int x4,y4;// bottom right
-	// If radius<0, it will be a circle or ellipse
-	// If radius>0, it will be rounded rectangle
-	double radius;
+
+	int type;
 	double angle;
 	char *text;
 	bool isSleted;
-}SP;//数据结构 
+	struct shape *next;
+}SP;/*数据结构 
+TYPE=0 //画直线 
+TYPE=1;  //画带箭头直线
+TYPE=2;  //矩形
+TYPE=3;  //圆角矩形
+TYPE=4;  //菱形
+TYPE=5;  //椭圆
+TYPE=6;  //文字*/
+int size=sizeof(SP);
+SP *p,*head,*tail;//链表
+
+
+
+
+
+int cx,cy;
+int flag;
+double mx,my;
+int TYPE; 
+void KeyboardEventProcess(int key,int event);
+void CharEventProcess(char c);
+void MouseEventProcess(int x,int y,int button,int event);
+void DrawBox_init(double x,double y,char str1[],char str2[]);
+void DrawBox_init1(double x,double y,char str1[],char str2[]);
+
+void DrawRec(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4);
+void DrawRoundedRec(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4);
+void DrawCircle(x, y);
+void DrawEllipse()
+double CalcAngle(double x0, double y0, double x1, double y1, double x2, double y2);
+double CalcDistance(double x1, double y1, double x2, double y2);
+void DrawGraphic(struct shape* p); 
+
+void init();//画界面 
+SP * InsertDoc(SP* head, SP*stud);/* 插入 */
+SP * DeleteDoc(SP* head, int num); /* 删除 */
+void travel(SP* p);//用于遍历链表画全部结点的图形 
+void traveldelete(SP* p); //用于遍历链表画全部结点的图形 
 
 
 
 
 
 
-
-
-
-
-int i=0;
-void init();
 void Main()
 {
-
 InitConsole();
 double chang,kuan;
 printf("请输入生成窗口长宽：\n（建议输入 11 7）\n");//自定义窗口大小 
@@ -82,17 +93,58 @@ InitGraphics(); //初始化窗口
 	init();//初始化画布 
 	
 	SetPenSize(1);//初始设置笔的大小为1 
-	registerKeyboardEvent(KeyboardEventProcess);//键盘相应 
+	registerKeyboardEvent(KeyboardEventProcess);//键盘响应 
+	registerCharEvent(CharEventProcess);//字符响应 
 	registerMouseEvent(MouseEventProcess);//鼠标响应 
+	head=tail=NULL;
 }
+
+
+
+
+
+
+void travel(SP* p)//用于遍历链表画全部结点的图形 
+{
+	SP* ptr;
+	if(p== NULL)
+        return;
+    else{
+    	 for(ptr =p; ptr!=NULL; ptr = ptr->next)
+        DrawGraphic(ptr);
+	}
+}
+
+
+
+
+
+
+
+
+void traveldelete(SP* p)//删除整个链表 
+{
+	SP *ptr1,*ptr2;
+		ptr1=p;
+	while(ptr1->next){
+		ptr2=ptr1->next;
+		free(ptr1);
+		ptr1=ptr2;
+	}
+	free(ptr2);
+}
+
+
+
+
+
 
 
 void MouseEventProcess(int x,int y,int button,int event)
 {
-	
-	static double lx=0.0,ly=0.0;
 	mx=ScaleXInches(x);
 	my=ScaleYInches(y);//将得到的像素点坐标转换为英寸 
+	double x1,y1,x3,y3;
 	static bool isDraw=FALSE;//判断是否要画 
 	switch (event){
 		case BUTTON_DOWN://按键按下 
@@ -117,8 +169,14 @@ void MouseEventProcess(int x,int y,int button,int event)
 				else if(mx>=0&&mx<=length&&my>cy-width-4*length&&my<=cy-width-3*length) {  TYPE=4;   }//菱形
 				else if(mx>=0&&mx<=length&&my>cy-width-5*length&&my<=cy-width-4*length) {  TYPE=5;  }//椭圆
 				else if(mx>=0&&mx<=length&&my>cy-width-6*length&&my<=cy-width-5*length) {  TYPE=6;   }//文字
-				else if(mx>=0&&mx<=length&&my>cy-width-7*length&&my<=cy-width-6*length) {MyDisplayClear();init();}//实现清屏 
+				else if(mx>=0&&mx<=length&&my>cy-width-7*length&&my<=cy-width-6*length) {MyDisplayClear();init();traveldelete(head)}//实现清屏 
 				else {
+					x1=mx;y1=my;
+						p=(SP*) malloc(size);
+						p->x1=x1;p->y1=y1;
+						p->x4=x1;p->y2=y1;	
+						p->type=TYPE;
+					}
 				} //这里写根据当前要画的图形模式进行绘制的代码！！！！！！！！！！！！！！！！
 
 				
@@ -136,12 +194,20 @@ void MouseEventProcess(int x,int y,int button,int event)
 		case BUTTON_UP:
 			if(button==LEFT_BUTTON) 
 			{
-				isDraw=FALSE; 
-				
+			x3=mx;y3=my;
+			p->x3=x3;p->y3=y3;
+			p->y4=y3;p->x2=x3;
+			p->angle=0;	
+			p->text=NULL;
+        	p->isSleted=0;
+        	p->next=NULL;
+			if(head == NULL) head = p;
+            else  tail->next = p;
+            tail = p;					
 			}//抬起左键 
 			else if(button==RIGHT_BUTTON) {
 				
-				isDraw=FALSE; 
+				
 			}//抬起右键 
 			break;
 		case MOUSEMOVE:
@@ -152,9 +218,18 @@ void MouseEventProcess(int x,int y,int button,int event)
 	
 		break;
 	}
-	lx=mx;
-	ly=my;
 }
+
+
+
+
+
+
+
+
+
+
+
 void KeyboardEventProcess(int key,int event)
 {
 	switch(event){
@@ -169,12 +244,32 @@ void KeyboardEventProcess(int key,int event)
 }
 
 
-void DrawT_init(double x,double y)
+
+
+void CharEventProcess(char c)
+{
+	
+	
+	
+} 
+
+
+
+
+
+
+
+void DrawT_init(double x,double y)//初始化界面写清屏字样 
 {
 	SetPenSize(1);
 	MovePen(x,y);
 	DrawTextString("清屏");
 }
+
+
+
+
+
 
 
 void DrawL_init()//画工具栏 
@@ -229,6 +324,11 @@ void DrawL_init()//画工具栏
 
 
 
+
+
+
+
+
 void DrawBox_init(double x,double y,char str1[],char str2[])//初始化时画调色盘所用函数
 {
 	
@@ -254,6 +354,7 @@ void DrawBox_init(double x,double y,char str1[],char str2[])//初始化时画调
 
 
 
+
 void DrawBox_init1(double x,double y,char str1[],char str2[])//初始化时画工具栏所用函数
 {
 	SetPenSize(1);
@@ -271,6 +372,10 @@ void DrawBox_init1(double x,double y,char str1[],char str2[])//初始化时画�
 	DrawLine(0,length);
 	DrawLine(-length,0);
 } 
+
+
+
+
 
 void init()
 {
@@ -296,7 +401,11 @@ void init()
 
 
 
-//以下为画图函数 
+
+
+
+
+//以下为画图函数 BY盖同学 
 void DrawGraphic(struct shape* p){
 	double x1, y1, x2, y2, x3, y3, x4, y4;
 	x1 = p->x1;
