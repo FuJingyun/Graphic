@@ -86,7 +86,8 @@ printf("请输入生成窗口长宽：\n（建议输入 11 7）\n");//自定义�
 scanf("%lf%lf",&chang,&kuan);
 SetWindowSize(chang, kuan);
 SetWindowTitle("Flow Chart Drawing");
-InitGraphics(); //初始化窗口 
+InitGraphics(); //初始化窗口
+FreeConsole();
 	
 	cx=GetWindowWidth();
 	cy=GetWindowHeight();
