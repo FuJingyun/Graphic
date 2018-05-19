@@ -170,7 +170,7 @@ void MouseEventProcess(int x,int y,int button,int event)
 				else if(mx>=0&&mx<=length&&my>cy-width-4*length&&my<=cy-width-3*length) {  TYPE=4;   }//菱形
 				else if(mx>=0&&mx<=length&&my>cy-width-5*length&&my<=cy-width-4*length) {  TYPE=5;  }//椭圆
 				else if(mx>=0&&mx<=length&&my>cy-width-6*length&&my<=cy-width-5*length) {  TYPE=6;   }//文字
-				else if(mx>=0&&mx<=length&&my>cy-width-7*length&&my<=cy-width-6*length) {MyDisplayClear();init();traveldelete(head)}//实现清屏 
+				else if(mx>=0&&mx<=length&&my>cy-width-7*length&&my<=cy-width-6*length) {MyDisplayClear();init();traveldelete(head);p=head=tail=NULL;}//实现清屏 
 				else {
 					x1=mx;y1=my;
 						p=(SP*) malloc(size);
