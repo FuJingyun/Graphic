@@ -1,0 +1,380 @@
+#include "graphics.h"
+#include "extgraph.h"
+#include "genlib.h"
+#include "simpio.h"
+#include "conio.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h>
+
+#include <windows.h>
+#include <olectl.h>
+#include <mmsystem.h>
+#include <wingdi.h>
+#include <ole2.h>
+#include <ocidl.h>
+#include <winuser.h>
+
+#define length 0.66
+#define width 0.66
+#define Length 2.0
+#define Width  1.0
+#define rw 10.27//右边颜料盘位置
+#define PI 3.141593
+
+int cx,cy;
+int flag;
+double mx,my;
+int TYPE; 
+void KeyboardEventProcess(int key,int event);
+void MouseEventProcess(int x,int y,int button,int event);
+void DrawBox_init(double x,double y,char str1[],char str2[]);
+void DrawBox_init1(double x,double y,char str1[],char str2[]);
+
+void DrawRec(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4);
+void DrawRoundedRec(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4);
+void DrawCircle(x, y, radius);
+void DrawEllipse()
+double CalcAngle(double x0, double y0, double x1, double y1, double x2, double y2);
+double CalcDistance(double x1, double y1, double x2, double y2);
+void DrawGraphic(struct shape* p); 
+
+
+
+
+typedef struct shape{
+	int x1,y1;//top left
+	int x2,y2;//top right
+	int x3,y3;// bottom left
+	int x4,y4;// bottom right
+	// If radius<0, it will be a circle or ellipse
+	// If radius>0, it will be rounded rectangle
+	double radius;
+	double angle;
+	char *text;
+	bool isSleted;
+}SP;//数据结构 
+
+
+
+
+
+
+
+
+
+
+int i=0;
+void init();
+void Main()
+{
+
+InitConsole();
+double chang,kuan;
+printf("请输入生成窗口长宽：\n（建议输入 11 7）\n");//自定义窗口大小 
+scanf("%lf%lf",&chang,&kuan);
+SetWindowSize(chang, kuan);
+SetWindowTitle("Flow Chart Drawing");
+InitGraphics(); //初始化窗口 
+	
+	cx=GetWindowWidth();
+	cy=GetWindowHeight();
+	init();//初始化画布 
+	
+	SetPenSize(1);//初始设置笔的大小为1 
+	registerKeyboardEvent(KeyboardEventProcess);//键盘相应 
+	registerMouseEvent(MouseEventProcess);//鼠标响应 
+}
+
+
+void MouseEventProcess(int x,int y,int button,int event)
+{
+	
+	static double lx=0.0,ly=0.0;
+	mx=ScaleXInches(x);
+	my=ScaleYInches(y);//将得到的像素点坐标转换为英寸 
+	static bool isDraw=FALSE;//判断是否要画 
+	switch (event){
+		case BUTTON_DOWN://按键按下 
+			if(button == LEFT_BUTTON)//鼠标左键的情况 
+			{
+				if(mx>=rw&&mx<=rw+length&&my>cy-width&&my<=cy-width+length) {SetPenColor("Red");flag=1;}
+				else if(mx>=rw&&mx<=rw+length&&my>cy-width-length&&my<=cy-width) {SetPenColor("Orange");flag=2;}
+				else if(mx>=rw&&mx<=rw+length&&my>cy-width-2*length&&my<=cy-width-length) {SetPenColor("Yellow");flag=3;}
+				else if(mx>=rw&&mx<=rw+length&&my>cy-width-3*length&&my<=cy-width-2*length) {SetPenColor("Green");flag=4;}
+				else if(mx>=rw&&mx<=rw+length&&my>cy-width-4*length&&my<=cy-width-3*length) {SetPenColor("Blue");flag=5;}
+				else if(mx>=rw&&mx<=rw+length&&my>cy-width-5*length&&my<=cy-width-4*length) {SetPenColor("Violet");flag=6;}
+				else if(mx>=rw&&mx<=rw+length&&my>cy-width-6*length&&my<=cy-width-5*length) {SetPenColor("Magenta");flag=7;}
+				else if(mx>=rw&&mx<=rw+length&&my>cy-width-7*length&&my<=cy-width-6*length) {SetPenColor("Cyan");flag=8;}
+				else if(mx>=rw&&mx<=rw+length&&my>cy-width-8*length&&my<=cy-width-7*length) {SetPenColor("White");flag=9;}
+				else if(mx>=rw&&mx<=rw+length&&my>cy-width-9*length&&my<=cy-width-8*length) {SetPenColor("Black");flag=0;}
+				//对应区域改变画笔颜色并做了记录 
+				
+				else if(mx>=0&&mx<=rw+length&&my>cy-width&&my<=cy-width+length) { TYPE=0;   }//画直线 
+				else if(mx>=0&&mx<=length&&my>cy-width-length&&my<=cy-width) { TYPE=1;  }//画带箭头直线
+				else if(mx>=0&&mx<=length&&my>cy-width-2*length&&my<=cy-width-length) { TYPE=2;   }//矩形
+				else if(mx>=0&&mx<=length&&my>cy-width-3*length&&my<=cy-width-2*length) { TYPE=3;     }//圆角矩形
+				else if(mx>=0&&mx<=length&&my>cy-width-4*length&&my<=cy-width-3*length) {  TYPE=4;   }//菱形
+				else if(mx>=0&&mx<=length&&my>cy-width-5*length&&my<=cy-width-4*length) {  TYPE=5;  }//椭圆
+				else if(mx>=0&&mx<=length&&my>cy-width-6*length&&my<=cy-width-5*length) {  TYPE=6;   }//文字
+				else if(mx>=0&&mx<=length&&my>cy-width-7*length&&my<=cy-width-6*length) {MyDisplayClear();init();}//实现清屏 
+				else {
+				} //这里写根据当前要画的图形模式进行绘制的代码！！！！！！！！！！！！！！！！
+
+				
+				SetPenSize(1);
+				isDraw=TRUE;				
+			}
+			else if(button == RIGHT_BUTTON)
+			{
+				
+				
+			}//右键按下 
+			break;
+		case BUTTON_DOUBLECLICK:
+			break;
+		case BUTTON_UP:
+			if(button==LEFT_BUTTON) 
+			{
+				isDraw=FALSE; 
+				
+			}//抬起左键 
+			else if(button==RIGHT_BUTTON) {
+				
+				isDraw=FALSE; 
+			}//抬起右键 
+			break;
+		case MOUSEMOVE:
+			if(isDraw)
+			{
+				
+			}//鼠标移动 
+	
+		break;
+	}
+	lx=mx;
+	ly=my;
+}
+void KeyboardEventProcess(int key,int event)
+{
+	switch(event){
+		case KEY_DOWN : 
+			switch(key){
+
+			}
+		break;
+		case KEY_UP : break;
+		}	
+	
+}
+
+
+void DrawT_init(double x,double y)
+{
+	SetPenSize(1);
+	MovePen(x,y);
+	DrawTextString("清屏");
+}
+
+
+void DrawL_init()//画工具栏 
+{
+	SetPenSize(3);
+	//画直线和带箭头直线 
+	MovePen(length/4,my-width+0.25*length);
+	DrawLine(0.5*length,0.5*length);
+	MovePen(length/4,my-width-0.75*length);
+	DrawLine(0.5*length,0.5*length);
+	MovePen(length*3/4,my-width-0.25*length);
+	DrawLine(-0.125*length,0);
+	MovePen(length*3/4,my-width-0.25*length);
+	DrawLine(0,-0.125*length);
+	
+	//画“T ” 
+	MovePen(length/4,my-width-5.3*length);
+	DrawLine(0.5*length,0);
+	MovePen(length/2,my-width-5.3*length);
+	DrawLine(0,-0.5*length);
+	
+	//画矩形
+	MovePen(length/7,my-width-1.75*length);
+	DrawLine(0.7*length,0);
+	DrawLine(0,0.5*length);
+	DrawLine(-0.7*length,0);
+	DrawLine(0,-0.5*length);
+	
+	//画圆角矩形 
+	MovePen(length/7,my-width-2.5*length);
+	DrawLine(0,length/6);
+	DrawArc(length/8, 180, -90);
+	DrawLine(0.5*length,0);
+	DrawArc(length/8, 90, -90);
+	DrawLine(0,-length/3);
+	DrawArc(length/8, 0, -90);
+	DrawLine(-0.5*length,0);
+	DrawArc(length/8, 270, -90);
+	DrawLine(0,length/6);
+	
+	//画菱形
+	MovePen(length/7,my-width-3.5*length);
+	DrawLine(0.35*length,0.2*length);
+	DrawLine(0.35*length,-0.2*length);
+	DrawLine(-0.35*length,-0.2*length);
+	DrawLine(-0.35*length,0.2*length);
+	
+	//画圆 
+	MovePen(length*5/6,my-width-4.5*length);
+	DrawArc(length/3, 0, 360);
+}
+
+
+
+void DrawBox_init(double x,double y,char str1[],char str2[])//初始化时画调色盘所用函数
+{
+	
+	StartFilledRegion(1);
+	SetPenColor(str1);
+	MovePen(x,y);
+	DrawLine(0,length);
+	DrawLine(length,0);
+	DrawLine(0,-length);
+	DrawLine(-length,0);
+	EndFilledRegion();
+
+	StartFilledRegion(1);
+	SetPenColor(str2);
+	MovePen(x,y);
+	DrawLine(0,-length);
+	DrawLine(length,0);
+	DrawLine(0,length);
+	DrawLine(-length,0);
+	EndFilledRegion();
+
+} 
+
+
+
+void DrawBox_init1(double x,double y,char str1[],char str2[])//初始化时画工具栏所用函数
+{
+	SetPenSize(1);
+	SetPenColor(str1);
+	MovePen(x,y);
+	DrawLine(0,length);
+	DrawLine(length,0);
+	DrawLine(0,-length);
+	DrawLine(-length,0);
+
+	SetPenColor(str2);
+	MovePen(x,y);
+	DrawLine(0,-length);
+	DrawLine(length,0);
+	DrawLine(0,length);
+	DrawLine(-length,0);
+} 
+
+void init()
+{
+	mx=ScaleXInches(cx);
+	my=ScaleYInches(cy);
+    DrawBox_init(rw,my-width,"Red","Orange");
+	DrawBox_init(rw,my-width-2*length,"Yellow","Green");
+	DrawBox_init(rw,my-width-4*length,"Blue","Violet");
+	DrawBox_init(rw,my-width-6*length,"Magenta","Cyan");
+	DrawBox_init(rw,my-width-8*length,"White","Black");
+	
+	DrawBox_init1(0,my-width,"Black","Black");
+	DrawBox_init1(0,my-width-2*length,"Black","Black");
+	DrawBox_init1(0,my-width-4*length,"Black","Black");
+	DrawBox_init1(0,my-width-6*length,"Black","Black");
+	
+	DrawT_init(length/4,my-width-6.6*length); //写清除字样 
+    DrawL_init();
+}//初始化图形界面 
+
+
+
+
+
+
+//以下为画图函数 
+void DrawGraphic(struct shape* p){
+	double x1, y1, x2, y2, x3, y3, x4, y4;
+	x1 = p->x1;
+	x2 = p->x2;
+	x3 = p->x3;
+	x4 = p->x4;
+	y1 = p->y1;
+	y2 = p->y2;
+	y3 = p->y3;
+	y4 = p->y4;
+	l1 = CalcDistance(x1, y1, x2, y2);
+	l2 = CalcDistance(x1, y1, x4, y4);
+	double radius = p->radius;
+	if(radius==0)DrawRec(x1, y1, x2, y2, x3, y3, x4, y4);
+	else if(radius<0){
+		{
+			if(l1==l2)DrawCircle((x1+x3)/2, (y1+y3)/2, l1/2);
+			else DrawEllipse();
+		}
+	else DrawRoundedRec(x1, y1, x2, y2, x3, y3, x4, y4);
+	}
+} 
+void DrawRec(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4)
+{
+	double angle;
+	SetPenSize(2);
+	MovePen(x1, y1);
+	DrawLine(x2-x1, y2-y1);
+	DrawLine(x3-x2, y3-y2);
+	DrawLine(x4-x3, y4-y3);
+	DrawLine(x1-x4, y1-y4);
+	
+}
+void DrawRoundRec(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4)
+{   double angle, Angle, dx1, dx2, dy1, dy2, l1, l2, rcos, rsin;
+    double r = 0.5;
+    dx1 = fabs(x2 - x1);
+	dx2 = fabs(x4 - x1);
+	dy1 = fabs(y2 - y1);
+	dy2 = fabs(y4 - y1);
+	l1 = sqrt(dx1*dx1 + dy1*dy1);
+	l2 = sqrt(dx2*dx2 + dy2*dy2);
+	while(r>(l1/4) || r>(l2/4))r/=2;
+	angle = CalcAngle(x1, y1, x1+1, y1, x2, y2);
+	Angle = angle*180/PI;
+	rcos = r*cos(angle);
+	rsin = r*sin(angle);
+	SetPenSize(2);
+	MovePen(x1, y1);
+	DrawArc(r, Angle+180, -90);
+	DrawLine(x2-x1, y2-y1);
+    DrawArc(r, Angle+90, -90);
+    DrawLine(x3-x2, y3-y2);
+    DrawArc(r, Angle, -90);
+    DrawLine(x4-x3,y4-y3);
+    DrawArc(r, Angle-90, -90);
+    DrawLine(x1-x4, y1-y4);
+}
+void DrawCircle(double x, double y, double radius)
+{
+	MovePen(x, y);
+	SetPenSize(2);
+	DrawArc(radius, 0, 360); 
+} 
+double CalcAngle(double x0, double y0, double x1, double y1, double x2, double y2)
+{
+	double l1, l2, angle;
+    l1 = CalcDistance(x0, y0, x1, y1);
+    l2 = CalcDistance(x0, y0, x2, y2);
+	angle = acos((dx1*dx2 + dy1*dy2)/(l1*l2));
+	return angle;
+}
+double CalcDistance(double x1, double y1, double x2, double y2)
+{
+	double dx, dy, lxy
+    dx = x2 - x1;
+    dy = y2 - y1;
+    lxy = sqrt(dx*dx + dy*dy);
+    return lxy;
+ } 
+
